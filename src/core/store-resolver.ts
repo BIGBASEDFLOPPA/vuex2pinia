@@ -42,7 +42,7 @@ async function collectModules(
     const source = await readFile(filePath, 'utf-8');
     const ast = parse(source, { sourceType: 'module', plugins: ['typescript'] });
 
-    const importMap = buildImportMap(ast, filePath);
+    const importMap = buildImportMap(ast);
     const modulesObject = findModulesObject(ast);
 
     if (!modulesObject) return;
@@ -104,7 +104,7 @@ async function collectModules(
     }
 }
 
-function buildImportMap(ast: t.File, filePath: string): Map<string, string> {
+function buildImportMap(ast: t.File): Map<string, string> {
     const map = new Map<string, string>();
 
     traverse(ast, {
@@ -118,24 +118,26 @@ function buildImportMap(ast: t.File, filePath: string): Map<string, string> {
         },
     });
 
-    void filePath;
     return map;
 }
 
 function findModulesObject(ast: t.File): t.ObjectExpression | null {
-    let modulesObject: t.ObjectExpression | null = null;
+    const configObject = findRootStoreCallObject(ast) ?? findExportDefaultObject(ast);
+    if (!configObject) return null;
+
+    const modulesProp = configObject.properties.find(
+        (p): p is t.ObjectProperty => t.isObjectProperty(p) && t.isIdentifier(p.key, { name: 'modules' }),
+    );
+
+    return modulesProp && t.isObjectExpression(modulesProp.value) ? modulesProp.value : null;
+}
+
+function findRootStoreCallObject(ast: t.File): t.ObjectExpression | null {
+    let configObject: t.ObjectExpression | null = null;
 
     function checkArguments(args: (t.Expression | t.SpreadElement | t.ArgumentPlaceholder)[]): void {
         const arg = args[0];
-        if (!t.isObjectExpression(arg)) return;
-
-        const modulesProp = arg.properties.find(
-            (p): p is t.ObjectProperty => t.isObjectProperty(p) && t.isIdentifier(p.key, { name: 'modules' }),
-        );
-
-        if (modulesProp && t.isObjectExpression(modulesProp.value)) {
-            modulesObject = modulesProp.value;
-        }
+        if (t.isObjectExpression(arg)) configObject = arg;
     }
 
     traverse(ast, {
@@ -153,8 +155,23 @@ function findModulesObject(ast: t.File): t.ObjectExpression | null {
         },
     });
 
-    return modulesObject;
+    return configObject;
 }
+
+function findExportDefaultObject(ast: t.File): t.ObjectExpression | null {
+    let exportedObject: t.ObjectExpression | null = null;
+
+    traverse(ast, {
+        ExportDefaultDeclaration(path) {
+            if (t.isObjectExpression(path.node.declaration)) {
+                exportedObject = path.node.declaration;
+            }
+        },
+    });
+
+    return exportedObject;
+}
+
 async function moduleDeclaresNamespaced(filePath: string): Promise<boolean> {
     const source = await readFile(filePath, 'utf-8');
     const ast = parse(source, { sourceType: 'module', plugins: ['typescript'] });

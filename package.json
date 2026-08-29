@@ -8,7 +8,9 @@
   "bin": {
     "vuex2pinia": "./dist/cli.js"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup src/index.ts src/cli.ts --format esm --dts --clean",
     "dev": "tsup src/index.ts src/cli.ts --format esm --dts --watch",
@@ -29,6 +31,7 @@
     "vitest": "^4.1.10"
   },
   "dependencies": {
+    "-": "^0.0.1-security.1",
     "@babel/generator": "^7.29.8",
     "@babel/parser": "^7.29.8",
     "@babel/traverse": "^7.29.8",
@@ -36,8 +39,15 @@
     "@vue/compiler-sfc": "^3.5.41",
     "cac": "^7.0.0",
     "diff": "^9.0.0",
-    "picocolors": "^1.1.1"
+    "picocolors": "^1.1.1",
+    "tsx": "^4.23.12"
   },
-  "keywords": ["vuex", "pinia", "codemod", "vue", "migration"],
+  "keywords": [
+    "vuex",
+    "pinia",
+    "codemod",
+    "vue",
+    "migration"
+  ],
   "license": "MIT"
 }
