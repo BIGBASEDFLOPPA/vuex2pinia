@@ -6,7 +6,7 @@ import { scanFiles } from '../core/file-scanner.js';
 import { runTransforms } from '../core/transform-runner.js';
 import { runStoreTransforms } from '../core/store-transform-runner.js';
 import { resolveStoreModules } from '../core/store-resolver.js';
-
+import { createDefineStoreSkeleton } from '../transforms/store/define-store-skeleton.js';
 import { renderDiff } from './diff.js';
 import {componentTransformRegistry, storeTransformRegistry} from "../transforms/registry/registry";
 
@@ -54,6 +54,9 @@ cli
 
         const storeModulePaths = new Set(storeResult.resolved.map((m) => m.filePath));
         storeModulePaths.add(resolvePath(options.store));
+
+        const pathSegmentsByFile = new Map(storeResult.resolved.map((m) => [m.filePath, m.pathSegments]));
+
         const extensions: string[] = String(options.ext)
             .split(',')
             .map((ext) => ext.trim());
@@ -81,12 +84,23 @@ cli
 
         for (const file of files) {
             const source = await readFile(file, 'utf-8');
-            const isStoreModule = storeModulePaths.has(resolvePath(file));
+            const resolvedPath = resolvePath(file);
+            const isStoreModule = storeModulePaths.has(resolvedPath);
+            const pathSegments = pathSegmentsByFile.get(resolvedPath);
+
+            const perFileStoreRegistry = pathSegments
+                ? {
+                    storeTransforms: {
+                        ...storeTransformRegistry.storeTransforms,
+                        'define-store-skeleton': createDefineStoreSkeleton(pathSegments),
+                    },
+                }
+                : storeTransformRegistry;
 
             let result;
             try {
                 result = isStoreModule
-                    ? await runStoreTransforms(file, source, storeTransformRegistry, { only })
+                    ? await runStoreTransforms(file, source, perFileStoreRegistry, { only })
                     : runTransforms(file, source, componentTransformRegistry, { only });
             } catch (error) {
                 const message = error instanceof Error ? error.message : String(error);
