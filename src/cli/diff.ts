@@ -1,16 +1,20 @@
-import { diffLines } from 'diff';
+import { structuredPatch } from 'diff';
 import pc from 'picocolors';
 
+/** Renders a unified diff (changed hunks with a few lines of context). */
 export function renderDiff(originalSource: string, transformedSource: string): string {
-    const changes = diffLines(originalSource, transformedSource);
+    const patch = structuredPatch('', '', originalSource, transformedSource, '', '', { context: 3 });
     const lines: string[] = [];
 
-    for (const change of changes) {
-        const color = change.added ? pc.green : change.removed ? pc.red : pc.dim;
-        const prefix = change.added ? '+' : change.removed ? '-' : ' ';
+    for (const hunk of patch.hunks) {
+        lines.push(pc.cyan(`@@ -${hunk.oldStart},${hunk.oldLines} +${hunk.newStart},${hunk.newLines} @@`));
 
-        for (const line of change.value.replace(/\n$/, '').split('\n')) {
-            lines.push(color(`${prefix} ${line}`));
+        for (const line of hunk.lines) {
+            const text = line.replace(/\r$/, '');
+            if (text.startsWith('+')) lines.push(pc.green(text));
+            else if (text.startsWith('-')) lines.push(pc.red(text));
+            else if (text.startsWith('\\')) continue;
+            else lines.push(pc.dim(text));
         }
     }
 

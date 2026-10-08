@@ -12,26 +12,30 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup src/index.ts src/cli.ts --format esm --dts --clean",
-    "dev": "tsup src/index.ts src/cli.ts --format esm --dts --watch",
+    "build": "tsup src/index.ts src/cli.ts --format esm --clean && tsc --emitDeclarationOnly --declaration --outDir dist",
+    "dev": "tsup src/index.ts src/cli.ts --format esm --watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@types/babel__generator": "^7.27.0",
     "@types/babel__traverse": "^7.28.0",
     "@types/diff": "^7.0.2",
-    "@types/node": "^26.2.0",
+    "@types/node": "^26.6.2",
     "eslint": "^10.8.1",
     "eslint-config-prettier": "^10.1.8",
+    "pinia": "^4.0.3",
     "prettier": "^3.9.6",
     "tsup": "^8.5.1",
+    "tsx": "^4.23.15",
     "typescript": "^7.0.2",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "vue": "^3.5.43",
+    "vuex": "^4.1.0"
   },
   "dependencies": {
-    "-": "^0.0.1-security.1",
     "@babel/generator": "^7.29.8",
     "@babel/parser": "^7.29.8",
     "@babel/traverse": "^7.29.8",
@@ -40,7 +44,7 @@
     "cac": "^7.0.0",
     "diff": "^9.0.0",
     "picocolors": "^1.1.1",
-    "tsx": "^4.23.12"
+    "recast": "^0.24.0"
   },
   "keywords": [
     "vuex",
@@ -49,5 +53,14 @@
     "vue",
     "migration"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "engines": {
+    "node": ">=18"
+  }
 }

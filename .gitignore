@@ -27,3 +27,6 @@ coverage/
 
 # vuegrate dry-run artifacts (if any temp files get written)
 .vuegrate-tmp/
+# test scratch
+tests/.tmp/
+scratch/

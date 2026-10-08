@@ -1,7 +1,7 @@
-import { readdir, stat } from 'node:fs/promises';
+import { readFile, readdir, stat } from 'node:fs/promises';
 import { join, extname } from 'node:path';
 
-const skipDirs = new Set(['node_modules', '.git', 'dist', 'build', '.vuex2pinia-tmp']);
+const skipDirs = new Set(['node_modules', '.git', 'dist', 'build', 'coverage', '.nuxt', '.output', '.vuex2pinia-tmp']);
 
 export interface ScanOptions {
     extensions: string[];
@@ -43,5 +43,21 @@ async function walkDirectory(dirPath: string, options: ScanOptions): Promise<str
 }
 
 function hasMatchingExtension(filePath: string, extensions: string[]): boolean {
+    if (filePath.endsWith('.d.ts')) return false;
     return extensions.includes(extname(filePath));
+}
+
+const STORE_CREATION = /\bcreateStore\s*(?:<[^>]*>)?\s*\(|\bnew\s+(?:Vuex\.)?Store\s*(?:<[^>]*>)?\s*\(/;
+
+/** Finds the file that creates the Vuex store, for when `--store` is not given. */
+export async function findStoreFile(files: string[]): Promise<string[]> {
+    const candidates: string[] = [];
+
+    for (const file of files) {
+        if (!/\.[cm]?[jt]s$/.test(file)) continue;
+        const source = await readFile(file, 'utf-8');
+        if (/from\s+['"]vuex['"]/.test(source) && STORE_CREATION.test(source)) candidates.push(file);
+    }
+
+    return candidates;
 }
