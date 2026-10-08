@@ -54,6 +54,14 @@
     "migration"
   ],
   "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/BIGBASEDFLOPPA/vuex2pinia/issues"
+  },
+  "homepage": "https://github.com/BIGBASEDFLOPPA/vuex2pinia#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BIGBASEDFLOPPA/vuex2pinia.git"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
